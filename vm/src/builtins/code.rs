@@ -366,7 +366,7 @@ impl PyCode {
         };
 
         let obj_name = match args.co_name {
-            OptionalArg::Present(obj_name) => obj_name,
+            OptionalArg::Present(obj_name) => obj_name.to_owned(),
             OptionalArg::Missing => self.code.obj_name.to_owned(),
         };
 
@@ -397,9 +397,9 @@ impl PyCode {
                 posonlyarg_count,
                 arg_count,
                 kwonlyarg_count,
-                source_path: source_path.as_object().as_interned_str(vm).unwrap(),
+                source_path: vm.ctx.intern_str(source_path.as_str()),
                 first_line_number,
-                obj_name: obj_name.as_object().as_interned_str(vm).unwrap(),
+                obj_name: vm.ctx.intern_str(obj_name.as_str()),
 
                 max_stackdepth: self.code.max_stackdepth,
                 instructions: self.code.instructions.clone(),
