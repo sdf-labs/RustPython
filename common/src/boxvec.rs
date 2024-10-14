@@ -46,7 +46,7 @@ impl<T> BoxVec<T> {
                 Ok(l) => l,
                 Err(_) => capacity_overflow(),
             };
-            let ptr = if mem::size_of::<T>() == 0 {
+            let ptr = if layout.size() == 0 {
                 ptr::NonNull::<MaybeUninit<T>>::dangling().as_ptr()
             } else {
                 let ptr = alloc::alloc(layout);
