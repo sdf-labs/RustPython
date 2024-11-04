@@ -182,6 +182,17 @@ mod decl {
         unsafe { (to_str(super::c_tzname[0]), to_str(super::c_tzname[1])) }.into_pytuple(vm)
     }
 
+    #[cfg(target_arch = "aarch64")]
+    #[pyattr]
+    fn altzone(vm: &VirtualMachine) -> i64 {
+        let tz_offset = timezone(vm);
+        if daylight(vm) == 1 {
+            tz_offset - 3600 // Adjust by one hour if DST is active
+        } else {
+            tz_offset
+        }
+    }
+
     fn pyobj_to_date_time(
         value: Either<f64, i64>,
         vm: &VirtualMachine,
