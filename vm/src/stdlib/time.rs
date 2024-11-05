@@ -182,7 +182,6 @@ mod decl {
         unsafe { (to_str(super::c_tzname[0]), to_str(super::c_tzname[1])) }.into_pytuple(vm)
     }
 
-    #[cfg(target_arch = "aarch64")]
     #[pyattr]
     fn altzone(vm: &VirtualMachine) -> i64 {
         let tz_offset = timezone(vm);
