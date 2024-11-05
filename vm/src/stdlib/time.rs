@@ -182,6 +182,8 @@ mod decl {
         unsafe { (to_str(super::c_tzname[0]), to_str(super::c_tzname[1])) }.into_pytuple(vm)
     }
 
+    #[cfg(not(target_env = "msvc"))]
+    #[cfg(not(target_arch = "wasm32"))]
     #[pyattr]
     fn altzone(vm: &VirtualMachine) -> i64 {
         let tz_offset = timezone(vm);
@@ -190,6 +192,16 @@ mod decl {
         } else {
             tz_offset
         }
+    }
+
+    #[cfg(target_env = "msvc")]
+    #[pyattr]
+    fn altzone(vm: &VirtualMachine) -> i64 {
+        // Timezone / C bindings not available, use chrono to calculate
+        let local_time = chrono::offset::Local::now();
+        let utc_time = local_time.and_utc();
+        let offset = local_time.offset_naive_utc();
+        offset.local_minus_utc()
     }
 
     fn pyobj_to_date_time(
