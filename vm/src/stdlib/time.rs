@@ -38,8 +38,7 @@ mod decl {
         PyObjectRef, PyResult, TryFromObject, VirtualMachine,
     };
     use chrono::{
-        naive::{NaiveDate, NaiveDateTime, NaiveTime},
-        DateTime, Datelike, Timelike,
+        naive::{NaiveDate, NaiveDateTime, NaiveTime}, DateTime, Datelike, Timelike
     };
     use std::time::Duration;
 
@@ -193,15 +192,33 @@ mod decl {
             tz_offset
         }
     }
-
+    
     #[cfg(target_env = "msvc")]
     #[pyattr]
-    fn altzone(vm: &VirtualMachine) -> i64 {
-        // Timezone / C bindings not available, use chrono to calculate
+    fn altzone(_vm: &VirtualMachine) -> i64 {
+        // Get current local time to determine DST offset
+        use chrono::{Offset, TimeZone};
         let local_time = chrono::offset::Local::now();
-        let utc_time = local_time.and_utc();
-        let offset = local_time.offset_naive_utc();
-        offset.local_minus_utc()
+        
+        // Get UTC offset in seconds (west is positive)
+        let offset_secs = local_time.offset().fix().local_minus_utc() as i64;
+        
+        // Check if we're in DST by comparing current offset with standard offset
+        let is_dst = {
+            let standard_time = chrono::offset::Local
+                .with_ymd_and_hms(local_time.year(), 1, 1, 0, 0, 0)
+                .unwrap(); // January 1st is guaranteed to be in standard time
+            local_time.offset().fix().local_minus_utc() != 
+            standard_time.offset().fix().local_minus_utc()
+        };
+        
+        // If currently in DST, return the offset directly
+        // If not in DST, add 3600 seconds (1 hour) to get the DST offset
+        if is_dst {
+            offset_secs
+        } else {
+            offset_secs + 3600
+        }
     }
 
     fn pyobj_to_date_time(
